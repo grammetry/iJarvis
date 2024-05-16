@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ToastContainer, toast } from 'react-toastify';
-import { Slide, Zoom, Flip, Bounce } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast, cssTransition } from 'react-toastify';
 
 import './css/App.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 import CustomCamera from './components/CustomCamera';
-import ServerCamera from './components/ServerCamera';
 import AudioRecorder from './components/AudioRecorder';
 import ChatBubble from './components/ChatBubble';
 
-
+//import { WebSocketUtility } from './components/WebSocketUtility';
 import WebSocketUtility from './components/WebSocketUtility.js';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import Hotkeys from "react-hot-keys";
@@ -77,20 +74,12 @@ function App() {
 
         scrollingBottom();
 
-        if (inputValue!==''){
-            const uuid1=await predictAction01(inputValue);
-            if (uuid1) {
-                //console.log('uuid',uuid);
-                getPredictResult(uuid1,1);
-            }
+        const uuid=await predictAction(inputValue);
 
-            const uuid2=await predictAction02(inputValue);
-            if (uuid2) {
-                //console.log('uuid',uuid);
-                getPredictResult(uuid2,2);
-            }
+        if (uuid) {
+            //console.log('uuid',uuid);
+            getPredictResult(uuid);
         }
-       
     }
 
     const handleChatInput = async () => {
@@ -102,11 +91,14 @@ function App() {
 
     }
 
-    const predictAction01 = async (text) => {     
+    const predictAction = async (text) => {     
         
         if (camera01Ref.current) {
 
-            const base64 = await camera01Ref.current.getShot();
+            const base64 = camera01Ref.current.getShot();
+            setCanvas01(base64);
+
+            //console.log(base64)
 
             const formData = new FormData();
             formData.append("prompt", text);
@@ -127,32 +119,7 @@ function App() {
 
     }
 
-    const predictAction02 = async (text) => {     
-        
-        if (camera02Ref.current) {
-
-            const base64 = await camera02Ref.current.getShot();
-
-            const formData = new FormData();
-            formData.append("prompt", text);
-            formData.append("image", base64);
-
-            const res = await fetch(predictAPI, {
-                method: 'POST',   
-                body: formData,
-            });
-          
-            const data = await res.json();
- 
-            return data.process_uuid;    
-
-        }else{
-            return null;
-        }
-
-    }
-
-    const getPredictResult = async (uuid,index) => {
+    const getPredictResult = async (uuid) => {
 
         const res = await fetch(`${processAPI}?process_uuid=${uuid}`, {
             method: 'GET'
@@ -173,10 +140,7 @@ function App() {
                 scrollingBottom();  
 
                 if (data.image){
-                    if (index===1)
-                        setCanvas01('data:image/png;base64,'+data.image);
-                    if (index===2)
-                        setCanvas02('data:image/png;base64,'+data.image);
+                    setCanvas01('data:image/png;base64,'+data.image);
                 }
             }
         }
@@ -189,28 +153,30 @@ function App() {
         setInputValue(evt.target.value);
     }
 
-    const handleCamera01Shot = async (evt) => {
+    const handleCamera01Shot = (evt) => {
 
         console.log('handleCamera01Shot');
-      
+
         if (camera01Ref.current) {
-            const base64 = await camera01Ref.current.getShot();
+
+            const base64 = camera01Ref.current.getShot();
             setCanvas01(base64)
+
         }
-        
 
     }
 
-    const handleCamera02Shot = async (evt) => {
+    const handleCamera02Shot = (evt) => {
 
         console.log('handleCamera02Shot');
-       
-        if (camera02Ref.current) {
-            const base64 = await camera02Ref.current.getShot();
-            setCanvas02(base64)
+        if (canvas02Ref.current) {
+            if (camera02Ref.current) {
 
+                const base64 = camera02Ref.current.getShot();
+                setCanvas02(base64)
+
+            }
         }
-        
     }
 
     const handleRecordToggle = () => {
@@ -296,11 +262,8 @@ function App() {
     const handleStt = async (myFile) => {   
         console.log(myFile);
 
-        const base6401 = await camera01Ref.current.getShot();
-        setCanvas01(base6401);
-
-        const base6402 = await camera02Ref.current.getShot();
-        setCanvas02(base6402);
+        const base64 = camera01Ref.current.getShot();
+        setCanvas01(base64);
 
         const formData = new FormData();
         formData.append("audio", myFile);
@@ -334,21 +297,14 @@ function App() {
 
                     setChatInput(myData.message);
                     
-                    const uuid1=await predictAction01(myData.message);
-                    if (uuid1) {
-                        //console.log('uuid2',uuid2);
-                        getPredictResult(uuid1,1);
-                    }
+                    const uuid2=await predictAction(myData.message);
 
-                    const uuid2=await predictAction02(myData.message);
                     if (uuid2) {
                         //console.log('uuid2',uuid2);
-                        getPredictResult(uuid2,2);
+                        getPredictResult(uuid2);
                     }
                 }else{
-                    //alert('No voice detected');
-                    dispatch(setMessage('No voice detected'));
-                    dispatch(setShow(true));
+                    alert('No voice detected');
                 }
                 websocket.stop();
             }
@@ -402,8 +358,24 @@ function App() {
 
                 <Hotkeys
                     keyName="Enter,Space"
+                    //keyName="*"
                     onKeyDown={handleKeyDown.bind(this)}
                     onKeyUp={handleKeyUp.bind(this)}
+                />
+
+                <ToastContainer
+                    position="bottom-center"
+                    autoClose={3000}
+                    hideProgressBar={true}
+                    newestOnTop={true}
+                    closeOnClick={true}
+                    closeButton={false}
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable={false}
+                    pauseOnHover
+                    // bodyClassName={"my-toast-body"}
+
                 />
 
                 <div className="container-fluid">
@@ -416,7 +388,10 @@ function App() {
                                             <AutoSizer>
                                                 {({ height, width }) => (
                                                     <div className="my-camera-container" style={{ width: (width - 5), height: (height - 7) }}>
-                                                        <ServerCamera height={height-7} width={width-5} ref={camera01Ref} index={0}></ServerCamera>
+
+                                                        <CustomCamera height={height} width={width} ref={camera01Ref}></CustomCamera>
+
+
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
                                                             <div className="my-video-name" >CAM 1</div>
                                                         </div>
@@ -430,13 +405,14 @@ function App() {
                                         <div className='my-camera-frame'>
                                             <AutoSizer>
                                                 {({ height, width }) => (
-                                                    <div className="my-camera-container" style={{ width: (width - 5), height: (height - 7) }}>
-                                                    
-                                                        <ServerCamera  height={height-7} width={width-5} ref={camera02Ref} index={1}></ServerCamera>
+                                                    <div style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
+
+                                                        <CustomCamera height={height} width={width} ref={camera02Ref}></CustomCamera>
+
+
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
                                                             <div className="my-video-name" >CAM 2</div>
                                                         </div>
-                                                        
                                                     </div>
 
                                                 )}
@@ -451,6 +427,7 @@ function App() {
                                             <AutoSizer>
                                                 {({ height, width }) => (
                                                     <div className="d-flex align-items-center justify-content-center" style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
+
                                                         <img src={canvas01} style={{ maxWidth: '100%', maxHeight: '100%' }}></img>
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
                                                             <div className="my-video-name" onClick={handleCamera01Shot} style={{ cursor: 'pointer' }}>Shot</div>
@@ -466,7 +443,7 @@ function App() {
                                         <div className='my-camera-frame'>
                                             <AutoSizer>
                                                 {({ height, width }) => (
-                                                    <div className="d-flex align-items-center justify-content-center" style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
+                                                    <div style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
                                                         <img src={canvas02} style={{ maxWidth: '100%', maxHeight: '100%' }}></img>
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
                                                             <div className="my-video-name" onClick={handleCamera02Shot} style={{ cursor: 'pointer' }}>Shot</div>
@@ -565,21 +542,7 @@ function App() {
                     </div>
                 </div>
 
-                <ToastContainer
-                    position="bottom-center"
-                    autoClose={1000}
-                    hideProgressBar={true}
-                    newestOnTop={true}
-                    closeOnClick={true}
-                    closeButton={false}
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable={false}
-                    pauseOnHover
-                    bodyClassName={"my-toast-body"}
-                    transition= {Slide}
 
-                />
 
             </div>
         

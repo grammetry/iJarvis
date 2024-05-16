@@ -13,4 +13,6 @@ export const processAPI= `${localhost}${port}/process`;
 
 export const sttAPI= `${localhost}${port}/stt`;
 
+export const cameraWS= `${wsLocalhost}${port}/camera`; 
+
 export const sttWS= `${wsLocalhost}${port}/websocket/stt`; 

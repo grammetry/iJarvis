@@ -1,9 +1,17 @@
 
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useDispatch, useSelector } from 'react-redux';
 import { useReactMediaRecorder } from "react-media-recorder";
 import { saveAs } from 'file-saver';
+
+
 import { sttAPI,processAPI } from '../APIPath';
+import { selectCurrentMessage, setShow, setMessage } from '../redux/store/currentMessage';
 import log from "../utils/console";
+import SoundWave from './SoundWave';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 
 const AudioRecorder = forwardRef((props, ref) => {
 
@@ -12,23 +20,35 @@ const AudioRecorder = forwardRef((props, ref) => {
     const [isActive, setIsActive] = useState(false);
     const [counter, setCounter] = useState(0);
 
+    const dispatch = useDispatch();
+
     useImperativeHandle(ref, () => ({
 
         setRecordStart: () => {
-            console.log('recoder start');
+            log('recoder start');
             setIsActive(true);
             startRecording();
         },
         setRecordEnd: async () => {
-            console.log('recoder end');
+            log('recoder end');
             pauseRecording();
             stopRecording();
-            //await save();
             setIsActive(false);
         },
        
 
     }));
+
+    const handleToggleRecord = () => {
+        if (isActive) {
+            setIsActive(false);
+            pauseRecording();
+            stopRecording();
+        } else {
+            setIsActive(true);
+            startRecording();
+        }   
+    }
 
 
     useEffect(() => {
@@ -76,27 +96,7 @@ const AudioRecorder = forwardRef((props, ref) => {
         echoCancellation: true
     });
    
-    //console.log("url", mediaBlobUrl);
-
-    // const save= async()=>{
-
-    //     if (mediaBlobUrl){
-    //         const mediaBlob = await fetch(mediaBlobUrl)
-    //         .then(response => response.blob())
-    //         .then(blob => {
-    //             const myFile = new File(
-    //                 [blob],
-    //                 "demo.wav",
-    //                 { type: 'audio/wav' }
-    //             );
-        
-    //             props.onStt(myFile);
-    //         });
-    //     }else{
-    //         alert('No audio file');
-    //     }
-    // }
-
+    
     useEffect(() => {
 
         if (mediaBlobUrl){
@@ -112,20 +112,43 @@ const AudioRecorder = forwardRef((props, ref) => {
                 props.onStt(myFile);
             });
         }else{
-            alert('No audio file');
+            
+            dispatch(setMessage('No audio file'));
+            dispatch(setShow(true));
+           
         }
 
     }, [mediaBlobUrl]);
 
+    useEffect(() => {
+
+            dispatch(setMessage('hello'));
+            dispatch(setShow(true));
+                
+    }, []);
+
+    useEffect(() => {
+
+        //log('isActive')
+        if (isActive)
+            dispatch(setMessage('Recording...'));
+        else
+            dispatch(setMessage('Stop recording...'));
+
+        dispatch(setShow(true));
+            
+    }, [isActive]);
+
+
     return (
-        <div>
+        <div onClick={handleToggleRecord}>
             {
-                (isActive) ?
-                ( <i className="fas fa-microphone" style={{ fontSize: '40px',color:'red'}}></i>)
+                (!isActive) ?
+                ( <div className="icon" style={{height:40,overflowY:'hidden'}}><FontAwesomeIcon icon={faMicrophone} style={{width:36,height:36}}/></div>)
                 :
-                ( <i className="fas fa-microphone" style={{ fontSize: '40px' }}></i>)
+                ( <div className="d-flex justify-content-center" style={{height:40,overflowY:'hidden'}}><SoundWave></SoundWave></div>)
             }
-           
+            
         </div>
     );
 });
