@@ -1,0 +1,272 @@
+@font-face {
+    font-family: 'Roboto';
+    src: url('../../public/fonts/Roboto-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Roboto Medium';
+    src: url('../../public/fonts/Roboto-Medium.ttf');
+}
+
+* {
+    font-family: 'Roboto', 'Roboto Medium';
+}
+
+@import 'var.css';
+
+.App {
+    text-align: center;
+    background-color: var(--bg_darker);
+}
+
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+.my-camera-area {
+    height: 100vh;
+    padding: 20px 20px;
+}
+
+.my-chat-area {
+    background-color: var(--bg_lighter);
+    height: 100vh;
+}
+
+.my-camera-cell {
+    height: 46vh;
+    width: 45%;
+    padding: 10px;
+}
+
+.my-camera-frame {
+    width: 100%;
+    height: 100%;
+    border: 3px solid var(--vivid_3);
+    border-radius: 15px;
+    padding: 10px;
+}
+
+.my-video-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+
+}
+
+.my-video-tag {
+    background-color: var(--vivid_3);
+    width: 80px;
+    height: 25px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    padding-top: 1px;
+    padding-left: 15px;
+    position: absolute;
+    top: 10px;
+    color: var(--text_darker);
+}
+
+.my-dot {
+    height: 14px;
+    width: 14px;
+    background-color: var(--text_darker);
+    border-radius: 50%;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.my-rec {
+    margin-left: 6px;
+    margin-top: 0px;
+    font-size: 16px;
+}
+
+.my-video-name {
+    width: 100px;
+    height: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    background-color: var(--vivid_3);
+    display: block;
+    margin: 0 75px;
+    position: relative;
+    border-radius: 0px 0px 0px 10px;
+    padding: 2px;
+    color: var(--text_darker);
+}
+
+.my-video-name::after {
+    content: '';
+    width: 0;
+    height: 0;
+    display: block;
+    border-bottom: 30px solid var(--vivid_3);
+    border-right: 30px solid transparent;
+    position: absolute;
+    top: 0;
+    left: 100%;
+}
+
+.my-camera-container {
+    background-color: var(--bg_lighter);
+    border-radius: 10px;
+    position: relative;
+}
+
+.my-footer-name {
+    color: var(--text_lighter);
+    font-weight: bold;
+    font-size: 25px;
+}
+
+.my-hello {
+    color: var(--vivid_3);
+    font-weight: bolder;
+    font-size: 22px;
+    margin-left: 25px;
+}
+
+.my-conversation-area {
+    border: 2px solid gray;
+    border-radius: 20px;
+    height: 80vh;
+    background-color: white;
+    background: linear-gradient(to bottom, #fffbf8, #989faf);
+
+}
+
+.my-name {
+    font-weight: bolder;
+    font-size: 26px;
+}
+
+.my-name-tag {
+    color: var(--text_darker);
+    background-color: var(--vivid_3);
+    font-weight: normal;
+    font-size: 14px;
+    font-weight:bold;
+    padding: 6px 8px 2px 8px;
+    border-radius: 6px;
+}
+
+.my-date {
+    font-weight: bolder;
+    font-size: 18px;
+    width: 100%;
+    text-align: left;
+    color: var(--bg_darker);
+    border-bottom: 2px solid var(--text_darker);
+}
+
+.my-conversation-input {
+    border: 2px solid gray;
+    border-radius: 20px;
+    height: 125px;
+    background-color: #989faf;
+    margin-top: 10px;
+
+}
+
+.my-text-input{
+    width:100%;
+}
+
+.my-avatar {
+    width: 122px;
+    height: 122px;
+    background-color: white;
+    /* top: 10px;
+    left: 300px; */
+    border: 3px solid gray;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    overflow: hidden;
+
+}
+
+.my-micro {
+    padding-bottom: 3px;
+    border-bottom: 2px solid #727a85;
+    width: 100%;
+}
+
+.my-enter{
+    cursor: pointer;
+    width: 43px;
+    height:43px;
+    margin-top: 1px;
+    background-color: #8a909e;
+    border-radius: 10px;
+    padding:2px;
+    margin-left:5px;
+}
+
+.my-enter:hover{
+   
+    background-color: #1e293b33;
+  
+}
+
+.my-bubble-res{
+    background-color: var(--bg_darker);
+    border-radius: 10px;
+    color:var(--text_lighter);
+    padding: 6px 12px;
+    margin-bottom: 5px;
+    font-size: 22px;
+}
+
+.my-bubble-req{
+    background-color: var(--bg_lighter);
+    border-radius: 10px;
+    color: #8a909e;
+    padding: 6px 12px;
+    font-size: 22px;
+    
+}
+
+.my-bubble-time{
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.my-chat-box{
+    overflow-y: scroll; 
+    overflow-x: hidden; 
+    height:calc(80vh - 160px);
+    width:100%;
+   
+}
+
+.my-chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.my-chat-box::-webkit-scrollbar-track {
+    margin: 2px;
+    border-radius: 10px;
+    background: rgba(224, 225, 230, 0.376);
+}
+
+.my-chat-box::-webkit-scrollbar-thumb {
+    background: #727a85;
+    border-radius: 10px;
+} 
+
+.my-recorder {
+    text-align: center;
+}
+
+input[type=text] {
+    background-color: #727a85 !important;
+    color: white !important;
+}
+
+input::placeholder {
+    color: white !important;
+}
