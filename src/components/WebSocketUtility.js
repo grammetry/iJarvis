@@ -28,18 +28,3 @@ export default class WebSocketUtility {
     }
 }
 
-// Create a new instance of WebSocketUtility
-const websocket = new WebSocketUtility('wss://example.com');
-
-// Set the message callback
-websocket.setMessageCallback((message) => {
-    console.log('Received message:', message);
-});
-
-// Start the WebSocket connection
-websocket.start();
-
-// Do something...
-
-// Stop the WebSocket connection
-websocket.stop();

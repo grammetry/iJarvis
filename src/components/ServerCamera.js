@@ -188,10 +188,6 @@ const ServerCamera = forwardRef((props, ref) => {
             setDeviceId(uuid);
         },
         getShot: async () => {
-            console.log('get shot')
-
-            console.log(myvideo.current.src)
-
             
             const textBase64=await dataUrlToBase64(myvideo.current.src)
             const imageBase64=textBase64.replace("data:text/plain;base64,", "data:image/png;base64,");
@@ -204,10 +200,7 @@ const ServerCamera = forwardRef((props, ref) => {
         getCurrentHeight: () => {
             return myvideo.current.videoHeight ? myvideo.current.videoHeight : 0;
         },
-        getAudio: () => {
-
-         
-        }
+       
 
     }));
 

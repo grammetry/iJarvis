@@ -23,7 +23,7 @@ import moment from 'moment';
 import avatar from "./assets/avatar.png";
 import log from "./utils/console";
 
-import { predictAPI,processAPI,sttAPI,sttWS } from './APIPath';
+import { predictAPI,processAPI,sttAPI,sttWS, predictWS } from './APIPath';
 import { selectCurrentMessage, setShow, setMessage } from './redux/store/currentMessage';
 
 function App() {
@@ -78,17 +78,30 @@ function App() {
         scrollingBottom();
 
         if (inputValue!==''){
-            const uuid1=await predictAction01(inputValue);
-            if (uuid1) {
-                //console.log('uuid',uuid);
-                getPredictResult(uuid1,1);
+
+            if (inputValue.toLowerCase().indexOf('where')>=0){
+                const uuid1=await predictAction01(inputValue);
+                if (uuid1) {
+                    //console.log('uuid',uuid);
+                    getPredictResult(uuid1,1);
+                }
+    
+                const uuid2=await predictAction02(inputValue);
+                if (uuid2) {
+                    //console.log('uuid',uuid);
+                    getPredictResult(uuid2,2);
+                }
+            }else{
+                const uuid1=await predictAction01(inputValue);
+                if (uuid1) {
+                    //console.log('uuid',uuid);
+                    getPredictResult(uuid1,1);
+                }
+                setCanvas01(null);
+                setCanvas02(null);
             }
 
-            const uuid2=await predictAction02(inputValue);
-            if (uuid2) {
-                //console.log('uuid',uuid);
-                getPredictResult(uuid2,2);
-            }
+           
         }
        
     }
@@ -107,6 +120,8 @@ function App() {
         if (camera01Ref.current) {
 
             const base64 = await camera01Ref.current.getShot();
+
+            setCanvas01(base64);
 
             const formData = new FormData();
             formData.append("prompt", text);
@@ -133,6 +148,8 @@ function App() {
 
             const base64 = await camera02Ref.current.getShot();
 
+            setCanvas02(base64);
+
             const formData = new FormData();
             formData.append("prompt", text);
             formData.append("image", base64);
@@ -152,7 +169,7 @@ function App() {
 
     }
 
-    const getPredictResult = async (uuid,index) => {
+    const getPredictResult_xx = async (uuid,index) => {
 
         const res = await fetch(`${processAPI}?process_uuid=${uuid}`, {
             method: 'GET'
@@ -164,8 +181,14 @@ function App() {
 
         if (data.status){
             if (data.status === 'done') {
+
+                let myResult=data.message
+                if (myResult.toLowerCase().indexOf('found')>=0){
+                    myResult=`Camera ${index} ${myResult}`;
+                }
+
                 const myInput = {
-                    text: data.message,
+                    text: myResult,
                     type: 'res',
                     time: moment().format('YYYY-MM-DD HH:mm:ss')
                 }
@@ -184,6 +207,46 @@ function App() {
         return data;    
 
     }
+
+
+    const getPredictResult = async (uuid,index) => {
+
+           const wsurl=`${predictWS}?process_uuid=${uuid}`;
+            //console.log(wsurl);
+            const websocket = new WebSocketUtility(wsurl);
+            websocket.setMessageCallback(async (message) => {
+                //console.log('Received message:', message);
+                const myData=JSON.parse(message);
+                if (myData.status==='done'){
+    
+                    let myResult=myData.message
+                    if (myResult.toLowerCase().indexOf('found')>=0){
+                        myResult=`Camera ${index} ${myResult}`;
+                    }
+    
+                    const myInput = {
+                        text: myResult,
+                        type: 'res',
+                        time: moment().format('YYYY-MM-DD HH:mm:ss')
+                    }
+                    setChatLog(Prev=>[...Prev,myInput]);
+                    scrollingBottom();  
+    
+                    if (myData.image){
+                        if (index===1)
+                            setCanvas01('data:image/png;base64,'+myData.image);
+                        if (index===2)
+                            setCanvas02('data:image/png;base64,'+myData.image);
+                    }
+                    websocket.stop();
+                }
+            });
+    
+            websocket.start();     
+
+    }
+
+
 
     const handleTextChange = (evt) => {
         setInputValue(evt.target.value);
@@ -333,18 +396,32 @@ function App() {
                 if (myData.message!==''){
 
                     setChatInput(myData.message);
-                    
-                    const uuid1=await predictAction01(myData.message);
-                    if (uuid1) {
-                        //console.log('uuid2',uuid2);
-                        getPredictResult(uuid1,1);
-                    }
 
-                    const uuid2=await predictAction02(myData.message);
-                    if (uuid2) {
-                        //console.log('uuid2',uuid2);
-                        getPredictResult(uuid2,2);
+                    if (myData.message.toLowerCase().indexOf('where')>=0){
+
+                        const uuid1=await predictAction01(myData.message);
+                        if (uuid1) {
+                            //console.log('uuid2',uuid2);
+                            getPredictResult(uuid1,1);
+                        }
+
+                        const uuid2=await predictAction02(myData.message);
+                        if (uuid2) {
+                            //console.log('uuid2',uuid2);
+                            getPredictResult(uuid2,2);
+                        }
+
+                    }else{
+                        const uuid1=await predictAction01(myData.message);
+                        if (uuid1) {
+                            //console.log('uuid2',uuid2);
+                            getPredictResult(uuid1,1);
+                        }
+                        setCanvas01(null);
+                        setCanvas02(null);
+                       
                     }
+                    
                 }else{
                     //alert('No voice detected');
                     dispatch(setMessage('No voice detected'));
@@ -388,11 +465,7 @@ function App() {
     useEffect(() => {
 
         handleHello();
-
-        getCameraDevices();
-
-        log(show)
-        log(message)
+        //getCameraDevices();
 
     }, []);
 
