@@ -68,3 +68,13 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+### Start up service
+sudo docker run -it \
+--name ijarvis-ws \
+-e NGINX_PORT=8003 \
+-e BACKEND_PORT=9527 \
+-e BACKEND_SERVER=10.204.16.53 \
+--net host \
+-t innodiskorg/ijarvis-website:v100

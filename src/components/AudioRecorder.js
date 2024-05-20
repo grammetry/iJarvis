@@ -35,6 +35,9 @@ const AudioRecorder = forwardRef((props, ref) => {
             stopRecording();
             setIsActive(false);
         },
+        setToggleRecord: () => {
+            handleToggleRecord();
+        }
        
 
     }));

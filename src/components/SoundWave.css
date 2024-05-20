@@ -57,7 +57,7 @@
     height: 100%;
     width: var(--boxSize);
     /* background: #12E2DC; */
-    background: var(--vivid_3);
+    background: var(--text_darker);
     animation-duration: 1.2s;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;

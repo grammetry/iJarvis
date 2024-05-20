@@ -287,3 +287,15 @@ input::placeholder {
     color: white !important;
 }
 
+.MuiModal-backdrop{
+    backdrop-filter: blur(0px)!important;    
+    background-color:#0000004f!important; 
+}
+
+.MuiModalDialog-root{
+    border: 1px solid #E0E1E6!important;
+    border-radius: 12px!important; 
+    box-shadow: 0px 0px 4px #CACBD733!important;
+    padding: 40px!important;
+    
+}

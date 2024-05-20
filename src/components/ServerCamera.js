@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { FaVideo, FaMicrophone, FaVideoSlash, FaMicrophoneSlash } from 'react-icons/fa';
 import log from "../utils/console";
 import WebSocketUtility from './WebSocketUtility.js';
 import { cameraWS } from '../APIPath';
+import { selectCurrentMessage, setShow, setMessage } from '../redux/store/currentMessage';
 
 
 const ServerCamera = forwardRef((props, ref) => {
 
     const myvideo = useRef(null);
     const canvasRef = useRef(null);
+
+    const dispatch = useDispatch();
 
     const blobToBase64=async (blob)=> {
         return new Promise((resolve, _) => {
@@ -23,32 +27,37 @@ const ServerCamera = forwardRef((props, ref) => {
         
         const wsurl=`${cameraWS}?index=${myIndex}`;
         console.log(wsurl);
-        // const websocket = new WebSocketUtility(wsurl);
-        // websocket.setMessageCallback(async (message) => {
-        //     console.log('Received message:', message);
-        //     //const myData=JSON.parse(message);
-
-        //     const base64=await blobToBase64(message);
-        //     console.log(base64);
-        //     // const blob = new Blob([message], { type: 'video/webm' });
-        //     // const url = URL.createObjectURL(blob);
-        //     myvideo.current.src = base64;
-        // });
-
-        // websocket.start();
-
-        //startPlay(myvideo.current, wsurl);
-
       
-        var ws = new WebSocket(wsurl);
-        ws.binaryType = 'blob';
-        ws.onmessage = function(event) {
-            // var image = document.getElementById('bytes');
-            // image.src = URL.createObjectURL(event.data);
-            if (myvideo.current) {
-                myvideo.current.src = URL.createObjectURL(event.data);
-            }   
-        };
+        try {
+
+            var ws = new WebSocket(wsurl);
+            ws.binaryType = 'blob';
+            ws.onmessage = async(event) => {
+                // var image = document.getElementById('bytes');
+                // image.src = URL.createObjectURL(event.data);
+                //console.log(event.data);
+
+                const aaa=await blobToBase64(event.data);
+                const bbb=aaa.replace("data:text/plain;base64,", "data:image/png;base64,");
+                myvideo.current.src=bbb;
+
+                //console.log(aaa)
+                // if (myvideo.current) {
+                //     myvideo.current.src = URL.createObjectURL(event.data);
+                //     //myvideo.current.src = URL.revokeObjectURL(event.data);
+                    
+                // }   
+            };
+            
+        } catch (error) {
+
+            dispatch(setMessage(`Connect camera failed`));
+            dispatch(setShow(true));
+
+            
+        }
+      
+        
 
 
 

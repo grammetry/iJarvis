@@ -3,12 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { Slide, Zoom, Flip, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Modal from '@mui/joy/Modal';
+import ModalDialog from '@mui/joy/ModalDialog';
 
 import './css/App.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 import CustomCamera from './components/CustomCamera';
 import ServerCamera from './components/ServerCamera';
 import AudioRecorder from './components/AudioRecorder';
+import CustomLoading from './components/CustomLoading';
 import ChatBubble from './components/ChatBubble';
 
 
@@ -29,6 +32,7 @@ import { selectCurrentMessage, setShow, setMessage } from './redux/store/current
 function App() {
 
     const [userName, setUsername] = useState('Mr. Innodisk');
+    const [showLoadingModal, setShowLoadingModal] = useState(false);
 
     const dispatch = useDispatch();
     const show = useSelector(selectCurrentMessage).show;
@@ -116,56 +120,76 @@ function App() {
     }
 
     const predictAction01 = async (text) => {     
-        
-        if (camera01Ref.current) {
 
-            const base64 = await camera01Ref.current.getShot();
+        try {
+            if (camera01Ref.current) {
 
-            setCanvas01(base64);
+                const base64 = await camera01Ref.current.getShot();
+    
+                setCanvas01(base64);
+    
+                const formData = new FormData();
+                formData.append("prompt", text);
+                formData.append("image", base64);
+    
+                const res = await fetch(predictAPI, {
+                    method: 'POST',   
+                    body: formData,
+                });
+              
+                const data = await res.json();
+     
+                return data.process_uuid;    
+    
+            }else{
+                return null;
+            }
+        } catch (error) {
 
-            const formData = new FormData();
-            formData.append("prompt", text);
-            formData.append("image", base64);
-
-            const res = await fetch(predictAPI, {
-                method: 'POST',   
-                body: formData,
-            });
-          
-            const data = await res.json();
- 
-            return data.process_uuid;    
-
-        }else{
-            return null;
+            dispatch(setMessage('Something went wrong'));
+            dispatch(setShow(true));
+             
         }
+        
+       
 
     }
 
     const predictAction02 = async (text) => {     
-        
-        if (camera02Ref.current) {
 
-            const base64 = await camera02Ref.current.getShot();
+        try {
 
-            setCanvas02(base64);
+            if (camera02Ref.current) {
 
-            const formData = new FormData();
-            formData.append("prompt", text);
-            formData.append("image", base64);
+                const base64 = await camera02Ref.current.getShot();
+    
+                setCanvas02(base64);
+    
+                const formData = new FormData();
+                formData.append("prompt", text);
+                formData.append("image", base64);
+    
+                const res = await fetch(predictAPI, {
+                    method: 'POST',   
+                    body: formData,
+                });
+              
+                const data = await res.json();
+     
+                return data.process_uuid;    
+    
+            }else{
+                return null;
+            }
+            
+        } catch (error) {
 
-            const res = await fetch(predictAPI, {
-                method: 'POST',   
-                body: formData,
-            });
-          
-            const data = await res.json();
- 
-            return data.process_uuid;    
-
-        }else{
-            return null;
+            dispatch(setMessage('Something went wrong'));
+            dispatch(setShow(true));
+            
         }
+        
+      
 
     }
 
@@ -212,15 +236,18 @@ function App() {
     const getPredictResult = async (uuid,index) => {
 
            const wsurl=`${predictWS}?process_uuid=${uuid}`;
+           setShowLoadingModal(true);
             //console.log(wsurl);
             const websocket = new WebSocketUtility(wsurl);
             websocket.setMessageCallback(async (message) => {
-                //console.log('Received message:', message);
+                
+                //console.log(message);
+
                 const myData=JSON.parse(message);
                 if (myData.status==='done'){
     
                     let myResult=myData.message
-                    if (myResult.toLowerCase().indexOf('found')>=0){
+                    if (myData.type==='vlm'){
                         myResult=`Camera ${index} ${myResult}`;
                     }
     
@@ -239,6 +266,7 @@ function App() {
                             setCanvas02('data:image/png;base64,'+myData.image);
                     }
                     websocket.stop();
+                    setShowLoadingModal(false);
                 }
             });
     
@@ -258,7 +286,9 @@ function App() {
       
         if (camera01Ref.current) {
             const base64 = await camera01Ref.current.getShot();
-            setCanvas01(base64)
+            console.log(base64.length)
+            if (base64.length>2500)
+                setCanvas01(base64)
         }
         
 
@@ -270,7 +300,8 @@ function App() {
        
         if (camera02Ref.current) {
             const base64 = await camera02Ref.current.getShot();
-            setCanvas02(base64)
+            if (base64.length>2500)
+                setCanvas02(base64)
 
         }
         
@@ -278,9 +309,9 @@ function App() {
 
     const handleRecordToggle = () => {
         console.log('handle Record Toggle');
-        if (camera01Ref.current) {
+        if (audioRecorderRef.current) {
 
-            camera01Ref.current.getAudio();
+            audioRecorderRef.current.setToggleRecord();
 
 
         }
@@ -299,6 +330,7 @@ function App() {
             if (audioRecorderRef.current) {
                 audioRecorderRef.current.setRecordStart();
             }
+            //setShowLoadingModal(true);
             
         }
     };
@@ -313,6 +345,7 @@ function App() {
             if (audioRecorderRef.current) {
                 audioRecorderRef.current.setRecordEnd();
             }
+            //setShowLoadingModal(false);
             
         }
     };
@@ -357,29 +390,42 @@ function App() {
     }
 
     const handleStt = async (myFile) => {   
-        console.log(myFile);
-
-        const base6401 = await camera01Ref.current.getShot();
-        setCanvas01(base6401);
-
-        const base6402 = await camera02Ref.current.getShot();
-        setCanvas02(base6402);
-
-        const formData = new FormData();
-        formData.append("audio", myFile);
-
-        const res = await fetch(sttAPI, {
-            method: 'POST',   
-            body: formData,
-        });
         
-        const data = await res.json();
+        try {
 
-        const uuid= data.process_uuid;
+            const base6401 = await camera01Ref.current.getShot();
+            setCanvas01(base6401);
+    
+            const base6402 = await camera02Ref.current.getShot();
+            setCanvas02(base6402);
+    
+            const formData = new FormData();
+            formData.append("audio", myFile);
+    
+            
+    
+            const res = await fetch(sttAPI, {
+                method: 'POST',   
+                body: formData,
+            });
+            
+            const data = await res.json();
+    
+            const uuid= data.process_uuid;
+    
+            if (uuid) { 
+                getSttResult(uuid);
+            }
+            
+        } catch (error) {
 
-        if (uuid) { 
-            getSttResult(uuid);
+            dispatch(setMessage('Something went wrong'));
+            dispatch(setShow(true));
+            
         }
+
+
+       
         
     }
 
@@ -387,6 +433,7 @@ function App() {
         
         const wsurl=`${sttWS}?process_uuid=${uuid}`;
         console.log(wsurl);
+        setShowLoadingModal(true);
         const websocket = new WebSocketUtility(wsurl);
         websocket.setMessageCallback(async (message) => {
             console.log('Received message:', message);
@@ -428,6 +475,7 @@ function App() {
                     dispatch(setShow(true));
                 }
                 websocket.stop();
+                setShowLoadingModal(false);
             }
         });
 
@@ -526,7 +574,7 @@ function App() {
                                                     <div className="d-flex align-items-center justify-content-center" style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
                                                         <img src={canvas01} style={{ maxWidth: '100%', maxHeight: '100%' }}></img>
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
-                                                            <div className="my-video-name" onClick={handleCamera01Shot} style={{ cursor: 'pointer' }}>Shot</div>
+                                                            <div className="my-video-name" onClick={handleCamera01Shot} style={{ cursor: 'pointer' }}>SHOT 1</div>
                                                         </div>
                                                     </div>
 
@@ -542,7 +590,7 @@ function App() {
                                                     <div className="d-flex align-items-center justify-content-center" style={{ width: (width - 5), height: (height - 7), backgroundColor: '#1e293b', borderRadius: '10px', position: 'relative' }}>
                                                         <img src={canvas02} style={{ maxWidth: '100%', maxHeight: '100%' }}></img>
                                                         <div style={{ position: 'absolute', left: -85, top: (height - 23) }}>
-                                                            <div className="my-video-name" onClick={handleCamera02Shot} style={{ cursor: 'pointer' }}>Shot</div>
+                                                            <div className="my-video-name" onClick={handleCamera02Shot} style={{ cursor: 'pointer' }}>SHOT 2</div>
                                                         </div>
                                                     </div>
 
@@ -653,6 +701,16 @@ function App() {
                     transition= {Slide}
 
                 />
+
+                <Modal open={showLoadingModal}>
+                    <ModalDialog sx={{ minWidth: 300, maxWidth: 300, minHeight: 300, layout: 'center' }}>
+
+                        <div style={{ width: 0, height: 0, background: 'green' }}>
+                            <CustomLoading />
+                        </div>
+
+                    </ModalDialog>
+                </Modal>
 
             </div>
         
